@@ -8,7 +8,8 @@ tex は wsl にてビルドします。
 
 ```bash
 $ sudo apt -y update
-$ sudo apt-get install -y \ texlive-lang-japanese \
-   texlive-extra-utils \
-   liblog-log4perl-perl
+$ sudo apt-get install -y \
+    texlive-lang-japanese \
+    texlive-extra-utils \
+    liblog-log4perl-perl
 ```
