@@ -1,60 +1,109 @@
-import sys
-from mypulp import Model, GRB, quicksum
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+2022-04-26
 
-model = Model("lptest")
-A = [
-    [2, 7],
-    [5, 3],
-]
-C = [
-    [75, 50],
-    [8, 7],
-]
-B = [
-    [30, 20],
-    [60, 50],
-    [80, 90]
-]
-D = [
-    [920, 790],
-    [750, 600],
-    [500, 480]
-]
+@author: yoichi_izunaga
+"""
+import numpy as np
+from mypulp import *
+
+"""
+packages
+"""
+
+#----------------#
+# input data
+#----------------#
+
+# list of production
+P = ["p1", "p2"]
+
+# list of months
+T = ["Jan", "Feb", "Mar"]
+
+# dict. of
+U = {
+    "p1": (2, 5),
+    "p2": (7, 3)
+}
+
+C = {
+    "p1": (75, 8),
+    "p2": (50, 7)
+}
+
+S = {
+    ("Jan", "p1"): 30,
+    ("Jan", "p2"): 20,
+    ("Feb", "p1"): 60,
+    ("Feb", "p2"): 50,
+    ("Mar", "p1"): 80,
+    ("Mar", "p2"): 90,
+}
+
+D = {
+    "Jan": (920, 790),
+    "Feb": (750, 600),
+    "Mar": (500, 480)
+}
+
+#----------------#
+# generate opt. model
+#----------------#
+m = Model("ex01_2")
+
+# decision vars.
+x = {}
+for p in P:
+    for t in T:
+        x[p, t] = m.addVar(vtype="C", lb=0.0, name="x({},{})".format(p, t))
+y = {}
+for p in P:
+    for t in T:
+        y[p, t] = m.addVar(vtype="C", lb=0.0, name="y({},{})".format(p, t))
+m.update()
+
+# usage constraint
+for t in T:  # month
+    for j in range(2):  # material
+        m.addConstr(quicksum(U[p][j] * x[p, t] for p in P) <= D[t][j])
+
+for i, t in enumerate(T):
+    prev_t = T[i - 1]
+
+    if i == 0:
+        prev_t = None
+
+    if prev_t is not None:
+        for p in P:
+            m.addConstr(x[p, t] - y[p, t] + y[p, prev_t] == S[t, p])
+    else:
+        for p in P:
+            m.addConstr(x[p, t] - y[p, t] == S[t, p])
 
 
-X = []
-# X1 = {X[1:, :] - B[1:, :]}
-# X2 = {X[2:, :] - B[2:, :]}
-# vacants are filled with 0
+m.update()
 
-for i in range(3):
-    xx = []
-    for j in range(2):
-        xx.append(model.addVar(name=f"x{i}_{j}"))
-    X.append(xx)
+m.setObjective(
+    quicksum(C[p][0] * x[p, t] for t in T for p in P)
+    + quicksum(C[p][1] * y[p, t] for t in T for p in P),
+    GRB.MINIMIZE
+)
 
-# 制約  (X + X1 + X2) >= B
+#----------------#
+# solving-phase
+#----------------#
+m.optimize()
 
+status = m.Status
 
-for i in range(3):
-    # 月 (1 ~ 3)
-    for j in range(2):
-        # 原料 (A ~ B)
+if status == 1:
+    print("Opt.Val = {}".format(m.ObjVal))
+    for t in T:
+        print(t)
+        for p in P:
+            print("prod:{}, \t stock:{}".format(x[p, t].X, y[p, t].X))
 
-        # 制約 XA <= D
-        model.addConstr(
-            quicksum(
-                xij * aji
-                for xij, aji in zip(X[i], [A[0][j], A[1][j]])
-            ) <= D[i][j]
-        )
-
-model.update()
-
-model.setObjective(quicksum(xi * ci for xi, ci in zip(X, C)), GRB.MINIMIZE)
-
-model.optimize()
-
-for xi in X:
-    print(xi.X)
-print(f"Optimal Val = {model.ObjVal}")
+else:
+    print("not-solved")
