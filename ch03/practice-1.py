@@ -15,20 +15,19 @@ class Problem(Enum):
     c = "c"
 
 
-def main(**args):
+def main(prob_name: Optional[Problem] = None):
     for i in range(8):
         x[i] = model.addVar(vtype="B", name=f"x{i}")
 
     model.addConstr(quicksum(xi * wi for xi, wi in zip(x, w)) <= 55)    # 体積制約
 
-    prob_name: Optional[Problem] = args.get("p", None)
-
-    if prob_name.value == "a":
-        model.addConstr(x[4] + x[5] + x[6] <= 1)        # 主食に関する制約
-    elif prob_name.value == "b":
-        model.addConstr(x[2] + x[3] <= 1)        # 果物に関する制約
-    elif prob_name.value == "c":
-        model.addConstr(x[0] - x[7] <= 0)        # コーヒーに関する制約
+    if prob_name:
+        if prob_name.value == "a":
+            model.addConstr(x[4] + x[5] + x[6] <= 1)        # 主食に関する制約
+        elif prob_name.value == "b":
+            model.addConstr(x[2] + x[3] <= 1)        # 果物に関する制約
+        elif prob_name.value == "c":
+            model.addConstr(x[0] - x[7] <= 0)        # コーヒーに関する制約
 
     model.update()
 
@@ -44,11 +43,11 @@ if __name__ == "__main__":
     # python $filepath -p a
     # というように、問題に沿う制約条件を動的に追加する
     option = "-p"
-    rules = {}
+    p = None
+
     if option in sys.argv:
         idx = sys.argv.index(option)
         value = sys.argv[idx + 1]
-        if value.startswith('-'):
-            raise ValueError(f'option {option} must have a value.')
-        rules[option[1:]] = Problem[value]
-    main(**rules)
+        p = Problem[value]
+
+    main(prob_name=p)
