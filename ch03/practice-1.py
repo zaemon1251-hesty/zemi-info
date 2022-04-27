@@ -27,7 +27,8 @@ def main(prob_name: Optional[Problem] = None):
         elif prob_name.value == "b":
             model.addConstr(x[2] + x[3] <= 1)        # 果物に関する制約
         elif prob_name.value == "c":
-            model.addConstr(x[0] - x[7] <= 0)        # コーヒーに関する制約
+            # (x0 + (1 - x7) は (x0, x7) = (1, 0) の時のみ 1 を超える)
+            model.addConstr(x[0] - x[7] <= 0)  # コーヒーに関する制約
 
     model.update()
 
