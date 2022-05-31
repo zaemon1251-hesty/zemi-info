@@ -56,6 +56,8 @@ P = list(itertools.combinations(I, 2))
 # print(P)
 
 # setting constants
+# if COMB_MODE is true, this program will also consider combinations between
+# items.
 COMB_MODE = True
 
 m = Model("ex06")
@@ -63,7 +65,7 @@ m = Model("ex06")
 # decision vars.
 x = {}
 for item in I:
-    x[item] = m.addVar(vtype="B", lb=0, ub=1, name="x({})".format(item))
+    x[item] = m.addVar(vtype="B", name="x({})".format(item))
 m.update()
 
 # usage constraint
@@ -72,13 +74,12 @@ for i, w in W.items():
 m.update()
 
 
-# branch if COMB_MODE is true
 if COMB_MODE:
     # decision combination vars.
     y = {}
     for item_i, item_j in P:
         y[item_i, item_j] = m.addVar(
-            vtype="B", lb=0, ub=1, name="x({}, {})".format(item_i, item_j))
+            vtype="B", name="x({}, {})".format(item_i, item_j))
 
     # usage combination constraint
     for item_i, item_j in P:
@@ -112,7 +113,7 @@ status = m.Status
 
 if status == 1:
     print("Opt.Val = {}".format(m.ObjVal))
-    print(item for item, xi in x.items() if xi.X > 0)
+    print("OptSet = {", *[item for item, xi in x.items() if xi.X > 0], "}")
 
 
 else:
