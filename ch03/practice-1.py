@@ -9,6 +9,7 @@ w = [10, 12, 7, 9, 21, 16, 18, 8]
 x = [False] * 8
 
 
+
 class Problem(Enum):
     a = "a"
     b = "b"
